@@ -25,8 +25,8 @@ class Excelx < GenericSpreadsheet
     'd-mmm-yy' => :date,
     'd-mmm' => :date,
     'mmm-yy' => :date,
-    'h:mm AM/PM' => :date,
-    'h:mm:ss AM/PM' => :date,
+    'h:mm AM/PM' => :time,
+    'h:mm:ss AM/PM' => :time,
     'h:mm' => :time,
     'h:mm:ss' => :time,
     'm/d/yy h:mm' => :date,
@@ -45,7 +45,7 @@ class Excelx < GenericSpreadsheet
     'hh:mm:ss' => :time,
     "dd/mm/yy\\ hh:mm" => :datetime,
   }
-  STANDARD_FORMATS = { 
+  STANDARD_FORMATS = {
     0 => 'General',
     1 => '0',
     2 => '0.00',
@@ -83,7 +83,7 @@ class Excelx < GenericSpreadsheet
     super()
     @file_warning = file_warning
     @tmpdir = "oo_"+$$.to_s
-    @tmpdir = File.join(ENV['ROO_TMP'], @tmpdir) if ENV['ROO_TMP'] 
+    @tmpdir = File.join(ENV['ROO_TMP'], @tmpdir) if ENV['ROO_TMP']
     unless File.exists?(@tmpdir)
       FileUtils::mkdir(@tmpdir)
     end
@@ -183,23 +183,23 @@ class Excelx < GenericSpreadsheet
     row,col = normalize(row,col)
     formula(row,col) != nil
   end
-  
+
   class Font
     attr_accessor :bold, :italic, :underline
-    
+
     def bold?
       @bold == true
     end
-        
-    def italic? 
+
+    def italic?
      @italic == true
     end
-    
+
     def underline?
       @underline == true
-    end    
+    end
   end
-  
+
   # Given a cell, return the cell's style
   def font(row, col, sheet=nil)
    sheet = @default_sheet unless sheet
@@ -209,7 +209,7 @@ class Excelx < GenericSpreadsheet
    s_attribute ||= 0
    s_attribute = s_attribute.to_i
    @style_definitions[s_attribute]
-  end 
+  end
 
   # set a cell to a certain value
   # (this will not be saved back to the spreadsheet file!)
@@ -250,24 +250,24 @@ class Excelx < GenericSpreadsheet
 
   # returns the internal type of an excel cell
   # * :numeric_or_formula
-  # * :string  
-  # Note: this is only available within the Excelx class 
+  # * :string
+  # Note: this is only available within the Excelx class
   def excelx_type(row,col,sheet=nil)
     sheet = @default_sheet unless sheet
     read_cells(sheet) unless @cells_read[sheet]
     row,col = normalize(row,col)
     return @excelx_type[sheet][[row,col]]
   end
-  
+
   # returns the internal value of an excelx cell
-  # Note: this is only available within the Excelx class 
+  # Note: this is only available within the Excelx class
   def excelx_value(row,col,sheet=nil)
     sheet = @default_sheet unless sheet
     read_cells(sheet) unless @cells_read[sheet]
     row,col = normalize(row,col)
     return @excelx_value[sheet][[row,col]]
   end
-  
+
   # returns the internal format of an excel cell
   def excelx_format(row,col,sheet=nil)
     sheet = @default_sheet unless sheet
@@ -277,7 +277,7 @@ class Excelx < GenericSpreadsheet
     result = attribute2format(s)
     result
   end
-  
+
   # returns an array of sheet names in the spreadsheet
   def sheets
     return_sheets = []
@@ -330,7 +330,7 @@ class Excelx < GenericSpreadsheet
     when :string
       @cell[sheet][key] = str_v
     when :date
-      @cell[sheet][key] = (Date.new(1899,12,30)+v.to_i).strftime("%Y-%m-%d") 
+      @cell[sheet][key] = (Date.new(1899,12,30)+v.to_i).strftime("%Y-%m-%d")
     when :datetime
       @cell[sheet][key] = (DateTime.new(1899,12,30)+v.to_f).strftime("%Y-%m-%d %H:%M:%S")
     when :percentage
@@ -391,7 +391,7 @@ class Excelx < GenericSpreadsheet
     raise RangeError unless self.sheets.include? sheet
     n = self.sheets.index(sheet)
     @sheet_doc[n].find("//*[local-name()='c']").each do |c|
-       s_attribute = c.attributes.to_h['s'].to_i   
+       s_attribute = c.attributes.to_h['s'].to_i
        if (c.attributes.to_h['t'] == 's')
          tmp_type = :shared
        elsif (c.attributes.to_h['t'] == 'b')
@@ -407,14 +407,14 @@ class Excelx < GenericSpreadsheet
         end
         if cell.name == 'v'
           if tmp_type == :time or tmp_type == :datetime
-            if cell.content.to_f >= 1.0 
-              if (cell.content.to_f - cell.content.to_f.floor).abs > 0.000001 
-                tmp_type = :datetime 
+            if cell.content.to_f >= 1.0
+              if (cell.content.to_f - cell.content.to_f.floor).abs > 0.000001
+                tmp_type = :datetime
               else
                 tmp_type = :date
               end
             else
-            end 
+            end
           end
           excelx_type = [:numeric_or_formula,format]
           excelx_value = cell.content
@@ -454,15 +454,15 @@ class Excelx < GenericSpreadsheet
     end
     @cells_read[sheet] = true
   end
-  
+
   # Checks if the default_sheet exists. If not an RangeError exception is
   # raised
   def check_default_sheet
     sheet_found = false
     raise ArgumentError, "Error: default_sheet not set" if @default_sheet == nil
-    
+
     sheet_found = true if sheets.include?(@default_sheet)
-    
+
     if ! sheet_found
       raise RangeError, "sheet '#{@default_sheet}' not found"
     end
@@ -545,7 +545,7 @@ class Excelx < GenericSpreadsheet
     @numFmts = []
     @cellXfs = []
     fonts = []
-    
+
     doc.find("//*[local-name()='numFmt']").each do |numFmt|
       numFmtId = numFmt.attributes.to_h['numFmtId']
       formatCode = numFmt.attributes.to_h['formatCode']
@@ -569,7 +569,7 @@ class Excelx < GenericSpreadsheet
         end
       end
     end
-    
+
     doc.find("//*[local-name()='cellXfs']").each do |xfs|
         xfs.each do |xf|
           numFmtId = xf.attributes.to_h['numFmtId']
@@ -599,3 +599,4 @@ class Excelx < GenericSpreadsheet
   end
 
 end # class
+
